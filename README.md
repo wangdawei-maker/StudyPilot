@@ -7,8 +7,15 @@
 ```text
 backend/   FastAPI 服务
 frontend/  React + TypeScript + Vite 前端
+docs/      需求文档
+planandconversation/  项目计划与历史对话
 docker-compose.yml  PostgreSQL 与 Redis
 ```
+
+## 文档
+
+- [需求文档](docs/需求文档.md)：功能需求、非功能需求、验收标准与范围边界
+- [项目计划](planandconversation/StudyPilot项目计划.md)：技术方案与六周排期
 
 ## 环境要求
 
@@ -31,11 +38,22 @@ docker compose up -d postgres redis
 cd backend
 py -3.13 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -e .
+python -m pip install -e ".[dev]"
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 如果本机没有 Python 3.13，将 `py -3.13` 改为已安装的 Python 3.11 或 3.12 版本。
+
+依赖统一声明在 `backend/pyproject.toml` 的 `dependencies` 和 `dev` extra 中，没有单独的 requirements 文件。`-e` 是可编辑安装，改完代码不用重装；只装运行时依赖时去掉 `[dev]` 即可。
+
+依赖按“首次需要的开发周”分组。第 1 周只需要第一组（fastapi、uvicorn、pydantic、sqlalchemy、asyncpg、alembic、argon2-cffi、email-validator），其余在对应周次才使用。
+
+运行测试与代码检查：
+
+```powershell
+python -m pytest
+python -m ruff check .
+```
 
 启动前端（另开一个终端）：
 
