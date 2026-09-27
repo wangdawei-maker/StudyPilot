@@ -55,6 +55,20 @@ python -m pytest
 python -m ruff check .
 ```
 
+数据库迁移（Alembic，需要 PostgreSQL 已启动）：
+
+```powershell
+cd backend
+python -m alembic upgrade head                            # 应用全部迁移
+python -m alembic current                                 # 查看当前版本
+python -m alembic revision --autogenerate -m "add xxx"    # 改完模型后生成迁移
+python -m alembic downgrade -1                            # 回退一个版本
+```
+
+迁移脚本位于 `backend/alembic/versions/`。连接串不在 `alembic.ini` 里，而是由 `alembic/env.py` 从根目录 `.env` 读取，避免密码进入版本库。
+
+**`backend/alembic.ini` 必须保持纯 ASCII 内容。** Alembic 以系统 locale 编码读取该文件（中文 Windows 上是 GBK），configparser 又不支持文件内声明编码，写入任何中文都会直接导致 `UnicodeDecodeError`。中文说明写在 `alembic/env.py` 中。
+
 启动前端（另开一个终端）：
 
 ```powershell
@@ -84,4 +98,5 @@ docker compose down
 - 已建立前端与后端最小骨架；
 - 已提供 PostgreSQL、Redis 本地开发服务；
 - 已提供 `/health` 探针；
-- 登录、workspace、数据库模型和迁移将在后续开发日实现。
+- 已建立身份与学习空间的四张表（`users`、`workspaces`、`workspace_members`、`auth_sessions`）及第一个 Alembic 迁移；
+- 注册、登录与 workspace 接口将在后续开发日实现。

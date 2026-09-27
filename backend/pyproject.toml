@@ -60,3 +60,24 @@ asyncio_default_fixture_loop_scope = "function"
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+src = []
+# 迁移脚本目录不参与 lint。它们由 alembic/script.py.mako 生成，是产物而非手写代码，
+# 而模板输出天生带两个 lint 问题：空迁移里 sqlalchemy / alembic.op 的 import 用不到
+# （F401），以及空的 upgrade()/downgrade() 里那个 pass（PIE790）。
+# 空迁移在开发中会反复出现（每次 autogenerate 检查 schema 漂移都会产生一个），
+# 靠改模板修不掉——除非在 Mako 里加条件分支，为了生成产物不值得。
+# alembic/env.py 是手写的，仍然照常检查。
+extend-exclude = ["alembic/versions"]
+
+# 上面 [tool.ruff] 里的 src = [] 和这里的 known-first-party 要一起写，少一个都不起作用。
+#
+# backend/ 下有个 alembic/ 目录（迁移脚本），ruff 默认会从 src（默认 "."）自动
+# 探测第一方模块，于是把这个目录和 site-packages 里的 alembic 包混为一谈，
+# 把 app.* 的 import 排到 alembic 后面。src = [] 关掉自动探测，
+# known-first-party 再显式指定真正的第一方包。
+#
+# 实际运行不受影响：那个目录没有 __init__.py，只是命名空间包的一段，
+# site-packages 里的常规包优先级更高，import alembic 拿到的仍是真的 alembic
+# （已验证）。只有 lint 结果会一直错下去。
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
