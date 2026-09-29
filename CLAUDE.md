@@ -8,6 +8,9 @@
 - `docs/需求文档.md` —— 需求唯一来源。功能需求 `FR-*`、非功能 `NFR-*`、数据需求 `DR-*`。
   **写代码和提交信息时引用这些编号**，别另起一套说法。
 - `planandconversation/StudyPilot项目计划.md` —— 周次计划。
+- `planandconversation/Day3-Day4拆分.md` —— **日级步骤拆分（步骤 1~9）**。
+  含每步的产出、验证方式、依赖与实测差异，以及 Day 4 的待拍板项。
+  工作以「步骤 N」为单位沟通；这份拆分原先只在对话里，压缩上下文后会丢，所以落盘。
 - `planandconversation/历史对话.md` —— 历史对话存档。
 
 ## 常用命令
@@ -110,6 +113,10 @@ docker compose ps
   - 测试：`tests/conftest.py`（测试库 fixture，**每轮清空 schema 再迁移**）、
     `test_db_constraints.py`（27 项约束回归）、`test_migrations.py`
     （漂移检查 + 降级往返），全套 100 个用例。
-  - 需求文档第 14 节的 6 个待确认问题**尚未处理**，实现 FR-WS-05 前要翻。
-- **下一步（第 4 天）**：学习空间接口与权限判定（FR-WS-01~04），统一开发环境主机，
-  前端认证实现。
+- **步骤进度**（拆分见 `planandconversation/Day3-Day4拆分.md`）：
+  - 步骤 1~6 ✅ 完成（测试基建、错误格式、security、注册、登录/登出/me、约束测试沉淀）
+  - 步骤 7 ⬜ workspace 接口与权限校验（`GET` / `PATCH /api/v1/workspaces/current`）
+  - 步骤 8 ⬜ 统一开发环境 host（`CORS_ORIGINS` → `127.0.0.1:5173`）
+  - 步骤 9 ⬜ 前端认证（注册页、登录页、auth 状态、路由保护）
+- **动手前要拍板的**：非成员访问返回 403 还是 404（FR-WS-03 写的是「403 或 404」）。
+  另外需求文档第 14 节 6 个待确认问题**尚未处理**，其中第 3 问与 FR-WS-05 直接相关。
