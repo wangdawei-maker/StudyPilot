@@ -10,6 +10,7 @@ from typing import Annotated, Literal
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+from sqlalchemy.engine import make_url
 
 # app/core/config.py -> app/core -> app -> backend -> 仓库根目录
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -38,12 +39,28 @@ class Settings(BaseSettings):
     # 所以用 NoDecode 关掉自动解析，交给下面的校验器切分。
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]
 
+    # FR-AUTH-06：会话有效期默认 7 天。
+    session_ttl_days: int = 7
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_cors_origins(cls, value: object) -> object:
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
+
+    @property
+    def test_database_url(self) -> str:
+        """测试库连接串 = 开发库名加 `_test` 后缀。
+
+        不单独配一个 TEST_DATABASE_URL 环境变量，是有意的：那样它会和
+        DATABASE_URL 各自漂移（改了主机忘了改测试库），而且多一个必须同步维护的地方。
+        派生出来则天然与开发库同主机、同账号、同后缀，只需要维护一份。
+        """
+        url = make_url(self.database_url)
+        if not url.database:
+            raise ValueError("DATABASE_URL 里没有库名，无法派生测试库")
+        return url.set(database=f"{url.database}_test").render_as_string(hide_password=False)
 
 
 settings = Settings()

@@ -22,16 +22,28 @@ config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
+#
+# disable_existing_loggers=False 是必须的：fileConfig 这个参数默认是 True，
+# 会把 alembic.ini 里没提到的 logger 全部 disabled=True。进程内调用迁移时
+# （tests/conftest.py 就是这么建测试库的），应用的 logger 会被一起弄哑——
+# 表现是日志凭空消失，而不是报错，非常难查。实测：不传这个参数，
+# 跑完 command.upgrade 后 app.core.errors 的 disabled 变成 True。
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
-# 连接串只有一个来源：.env（经 app.core.config）。alembic.ini 里那份是占位符，
+# 连接串默认只有一个来源：.env（经 app.core.config）。alembic.ini 里那份是占位符，
 # 如果这一行没执行成功，报错信息里会直接出现 PLACEHOLDER-SET-BY-env.py，
 # 一眼能看出问题在哪，而不是连到某个意外的库上。
 #
+# config.attributes 是 Alembic 官方的「调用方传参」通道：命令行不经过它，
+# 但进程内调用（如 tests/conftest.py 用 command.upgrade 建测试库）可以塞一个
+# sqlalchemy_url 进来覆盖。没有它的话，测试夹具没法把迁移指向 <库名>_test——
+# settings 是 import 时就构造好的单例，事后再改环境变量也没用。
+#
 # replace("%", "%%") 不是多余的：set_main_option 底层是 ConfigParser，
 # 而 % 在里面是插值符号。密码里出现 % 时不转义就会抛 InterpolationSyntaxError。
-config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
+database_url = config.attributes.get("sqlalchemy_url") or settings.database_url
+config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 
 # add your model's MetaData object here
 # for 'autogenerate' support

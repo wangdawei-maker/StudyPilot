@@ -98,8 +98,18 @@ docker compose ps
 - **第 1 天**：前端 + 后端骨架、依赖声明、`/health` 探针、需求文档。
 - **第 2 天**：配置层、数据库基类与四张表（`users`、`workspaces`、`workspace_members`、
   `auth_sessions`）、Alembic 接入、首个迁移 `2a5c41bae41c`。
-  - 已验证：升级/降级/漂移检查全通过，约束行为经 8 项插数据实测。
-  - **未完成**：`tests/conftest.py` 的测试库 fixture，以及把上述约束行为沉淀成
-    可回归的自动化测试（目前只是一次性 SQL）。计划在第 3 天补。
-- **下一步（第 3 天）**：注册 / 登录 / 会话接口（FR-AUTH-01~10、FR-WS-01~04），
-  先做测试库 fixture。
+- **第 3 天**：认证全链路（FR-AUTH-01~10）+ 测试基础设施。
+  - `app/core/`：`errors.py`（API-02 统一错误体 + 全局处理器）、`request_id.py`
+    （纯 ASGI 中间件，FR-EVAL-05）、`logging_setup.py`、`security.py`
+    （Argon2 密码 + SHA-256 会话令牌）。
+  - `app/api/`：`v1/auth.py`（register / login / logout / me）、`cookies.py`
+    （Cookie 策略）、`deps.py`（`get_current_user`）。
+  - `app/services/`：`auth.py`、`workspaces.py`（FR-AUTH-08 双写的唯一入口）。
+  - `app/db/integrity.py`：从 `IntegrityError` 认约束名（asyncpg 的坑在
+    `exc.orig.__cause__` 上，不在 `exc.orig`）。
+  - 测试：`tests/conftest.py`（测试库 fixture，**每轮清空 schema 再迁移**）、
+    `test_db_constraints.py`（27 项约束回归）、`test_migrations.py`
+    （漂移检查 + 降级往返），全套 100 个用例。
+  - 需求文档第 14 节的 6 个待确认问题**尚未处理**，实现 FR-WS-05 前要翻。
+- **下一步（第 4 天）**：学习空间接口与权限判定（FR-WS-01~04），统一开发环境主机，
+  前端认证实现。
